@@ -2931,8 +2931,27 @@ BindGlobal("TYPE_LOWINDEX_DATA",
     IsObject and IsDataObjectRep));
 
 BindGlobal("IsDoneIter_LowIndSubs",function(iter)
-local data, G, N, ts, rels, m, mm, stack1, stack2, mu, nu, s, t, n, i, sj,
-j, ok, b,k,tr;
+local data,   # Iterator data
+      G,      # Underlying f.p. group
+      N,      # Subsemigroup index bound
+      ts,     # Definitions stack???
+      rels,   # Relation of G
+      m,      # Number of group generators of G (i.e. does not include inverses of generators)
+      mm,     # 2*m-1
+      stack1,
+      stack2,
+      mu,     # Scratch partial perm
+      nu,     # Scratch partial perm
+      s,      # Last definition on stack ????
+      t,
+      n,      # Index of current subgroup
+      i,
+      sj,
+      j,
+      ok,
+      b,
+      k,
+      tr;     # Generators of G (together with inverses) in reverse order?
 
   data:=iter!.data;
   if data.isDone then
@@ -2960,15 +2979,17 @@ j, ok, b,k,tr;
 
   while Length(ts)>0 do
     s:=Remove(ts);
-    t:=s[1];
-    n:=s[2];
-    i:=s[3];
-    sj:=s[4];
+    t:=s[1];  # coset table of previous subgroup
+    n:=s[2];  # index of previous subgroup
+    i:=s[3];  # previously added generator
+    sj:=s[4]; # previously modified vertex
     if i>mm then
+      # The previously added generator was the last possible generator,
+      # so move to next vertex
       i:=1;
       sj:=sj+1;
     fi;
-    j:=sj;
+    j:=sj; # j is the currently consiered vertex
 
     # find first open entry
     ok:=true;
@@ -2978,6 +2999,8 @@ j, ok, b,k,tr;
       fi;
       while ok and i<=mm do
         if t[i][j]=0 then
+          # Vertex j has no label i edge, try defining it
+          # First try adding a new vertex
           # try n+1
           ok:=false;
           if n<N then
@@ -2987,9 +3010,13 @@ j, ok, b,k,tr;
               #Add(s,ShallowCopy(k));
               s[k]:=ShallowCopy(t[k]);
             od;
+            # s is now a copy of the table
+            # try defining new edge and its reverse
             s[i][j]:=n+1;
             s[i+1][n+1]:=j;
             #Try(s,n+1,i,j);
+            # stack1 is the vertex stack
+            # stack2 is the label stack
             stack1[1]:=j;stack2[1]:=i;
             if LOWINDEX_COSET_SCAN(s,rels,stack1,stack2)
                 and LOWINDEX_IS_FIRST(s,n+1,mu,nu) then
@@ -3098,6 +3125,9 @@ local m, rels, rel,w, wo, ok, a, k, t, ts, data, i, j;
     fi;
   od;
 
+  Print("NEW RELATORS:\n");
+  Print(rels, "\n");
+
   # translate rels:
   for i in [1..Length(rels)] do
     for j in [1..Length(rels[i])] do
@@ -3111,6 +3141,9 @@ local m, rels, rel,w, wo, ok, a, k, t, ts, data, i, j;
       rels[i][j]:=w;
     od;
   od;
+
+  Print("NEW RELATORS:\n");
+  Print(rels, "\n");
 
   LOWINDEX_PREPARE_RELS(rels);
 
